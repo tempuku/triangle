@@ -5,6 +5,16 @@ module Lib
 import Text.Read (readEither)
 import Data.Typeable(typeOf)
 import Data.Data (Typeable)
+import Control.Monad.State
+import Control.Monad.Reader
+import Control.Monad.Except
+import Control.Monad.Writer
+
+
+type MyApp = ExceptT String IO
+
+runMyApp :: MyApp a -> IO (Either String a)
+runMyApp app = runExceptT app
 
 data Shape = Triangle | Square | Circle deriving (Show, Enum, Bounded)
 
@@ -34,10 +44,18 @@ toEnumEither i =
 getAreaByInputs :: String -> String -> Either String Float
 getAreaByInputs shapeString sideString = do
     shapeNumber <- readEither shapeString
-    shape <- toEnumEither shapeNumber 
+    shape <- toEnumEither shapeNumber
     sideLong <- readEither sideString
-    return (area shape sideLong)
+    return $ area shape sideLong
 
-
-someFunc :: Maybe Float
-someFunc = area <$> Just Triangle <*> Just 2
+getArea :: MyApp Float
+getArea = do
+    liftIO $ putStrLn "Write shape number"
+    shapeString <- liftIO getLine
+    shapeNumber <- liftEither $ readEither shapeString
+    shape <- liftEither $ toEnumEither shapeNumber
+    
+    liftIO $ putStrLn "Write side long"
+    sideString <- liftIO getLine
+    sideLong <- liftEither $ readEither sideString
+    return $ area shape sideLong

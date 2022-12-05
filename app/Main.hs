@@ -35,13 +35,13 @@ main = do
     --                         let result = area shape sideLong
     --                         putStrLn . (++) "Area equal " $ show result
 
-    putStrLn "Write shape number"
-    shape <- getLine
-    putStrLn "Write side long"
-    side <- getLine
-    putStrLn "Write side long"
+    -- putStrLn "Write shape number"
+    -- shape <- getLine
+    -- putStrLn "Write side long"
+    -- side <- getLine
+    -- putStrLn "Write side long"
     
-    let result = getAreaByInputs shape side
+    result <- runMyApp getArea
     case result of
         Right a -> putStrLn  ("Area equal " <> show a)
         Left e -> putStrLn e
