@@ -1,47 +1,29 @@
 module Main (main) where
 
 import Lib
--- import Safe (toEnumMay)
--- import Text.Read (readEither)
--- import Text.Printf (printf)
+import Options.Applicative as Opt
 
 main :: IO ()
 main = do
-    -- putStrLn "Write shape number"
-    -- shapeInt <- readMaybe <$> getLine
-    -- print shapeInt
-    -- let shape = shapeInt >>= toEnumMay
-    -- putStrLn ("Your choose: " ++ show shape)
-    -- putStrLn "Write side long"
-    -- sideLong <- readMaybe <$> getLine
-    -- let result = area <$> shape <*> sideLong
-    -- print result
-
-    -- putStrLn "Write shape number"
-    -- shapeEither <- readEither <$> getLine
-    -- case shapeEither of
-    --     Left e -> putStrLn ("error while reading shape number: " ++ e)
-    --     Right shapeInt -> do
-    --         let shapeMaybe = toEnumMay shapeInt
-    --         case shapeMaybe of
-    --             Nothing -> putStrLn . printf "Shape with number %d doesn't exist" $ shapeInt
-    --             Just shape -> do
-    --                 putStrLn ("Your choose: " ++ show shape)
-    --                 putStrLn "Write side long"
-    --                 sideEither <- readEither <$> getLine
-    --                 case sideEither of
-    --                     Left e -> putStrLn ("error while reading side long: " ++ e)
-    --                     Right sideLong -> do
-    --                         let result = area shape sideLong
-    --                         putStrLn . (++) "Area equal " $ show result
-
-    -- putStrLn "Write shape number"
-    -- shape <- getLine
-    -- putStrLn "Write side long"
-    -- side <- getLine
-    -- putStrLn "Write side long"
-    
-    result <- runMyApp getArea
+    config <- execParser opts
+    result <- runMyApp getArea config 0
     case result of
-        Right a -> putStrLn  ("Area equal " <> show a)
+        Right a -> putStrLn . report $ a
         Left e -> putStrLn e
+    where
+        opts = info (mkConfig <**> helper)
+                    (fullDesc <> progDesc "Directory usage info")
+        report (result, log_output) = "Area equal "
+            <> show result <> "\n"
+            <> foldl (<>) "" log_output
+
+mkConfig :: Opt.Parser AppEnv
+mkConfig =
+  AppEnv
+  <$> option auto
+      (metavar "ROUNDS" <> short 'r' <> long "round_number" <> value maxBound <>
+       help "How much times to start the programm")
+  <*> strOption
+      (metavar "NAME" <> long "name" <> short 'n' <>
+       help "Name for you")
+

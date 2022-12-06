@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 module Lib
     (
         module Lib
@@ -11,10 +12,15 @@ import Control.Monad.Except
 import Control.Monad.Writer
 
 
-type MyApp = ExceptT String IO
+data AppEnv = AppEnv {
+    rounds :: Int,
+    name :: String
+}
 
-runMyApp :: MyApp a -> IO (Either String a)
-runMyApp app = runExceptT app
+type MyApp logEntry state = StateT state (ReaderT AppEnv (WriterT [logEntry] (ExceptT String IO)))
+
+runMyApp :: MyApp logEntry state a -> AppEnv -> state -> IO (Either String (a, [logEntry]))
+runMyApp app config st = runExceptT (runWriterT (runReaderT (evalStateT app st) config))
 
 data Shape = Triangle | Square | Circle deriving (Show, Enum, Bounded)
 
@@ -48,14 +54,22 @@ getAreaByInputs shapeString sideString = do
     sideLong <- readEither sideString
     return $ area shape sideLong
 
-getArea :: MyApp Float
+getArea :: MyApp String Float Float
 getArea = do
-    liftIO $ putStrLn "Write shape number"
-    shapeString <- liftIO getLine
-    shapeNumber <- liftEither $ readEither shapeString
-    shape <- liftEither $ toEnumEither shapeNumber
-    
-    liftIO $ putStrLn "Write side long"
-    sideString <- liftIO getLine
-    sideLong <- liftEither $ readEither sideString
-    return $ area shape sideLong
+    AppEnv {..} <- ask
+    when (rounds > 0) $ do
+        liftIO $ putStrLn "Write shape number"
+        shapeString <- liftIO getLine
+        shapeNumber <- liftEither $ readEither shapeString
+        shape <- liftEither $ toEnumEither shapeNumber
+        
+        liftIO $ putStrLn "Write side long"
+        sideString <- liftIO getLine
+        sideLong <- liftEither $ readEither sideString
+        local_state <- flip local getArea
+              $ \env -> env {
+                  rounds = rounds - 1
+                }
+        modify' (+area shape sideLong)
+        tell ["Sum equal " <> show local_state <> " on round " <> show (rounds-1) <> "\n"]
+    get

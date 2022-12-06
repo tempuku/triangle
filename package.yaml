@@ -35,9 +35,6 @@ ghc-options:
 - -Wpartial-fields
 - -Wredundant-constraints
 
-library:
-  source-dirs: src
-
 executables:
   triangle-exe:
     main:                Main.hs
@@ -47,7 +44,9 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - triangle
+    - optparse-applicative
+    other-extensions:
+    - RecordWildCards
 
 tests:
   triangle-test:
